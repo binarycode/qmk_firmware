@@ -87,13 +87,13 @@ void matrix_scan_user(void) {
     uint8_t layer = biton32(layer_state);
 
     switch (layer) {
-      case _STD:
+      case BASE:
         set_led_off;
         break;
-      case _FN:
+      case FN:
         set_led_blue;
         break;
-      case _NUM:
+      case NUM:
         set_led_red;
         break;
       default:
