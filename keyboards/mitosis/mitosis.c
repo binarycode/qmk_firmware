@@ -17,6 +17,10 @@ void matrix_init_kb(void) {
 	matrix_init_user();
 	uart_init();
 	led_init();
+
+	set_led_red; _delay_ms(250);
+	set_led_blue; _delay_ms(250);
+	set_led_green; _delay_ms(250);
 }
 
 #ifdef SWAP_HANDS_ENABLE
