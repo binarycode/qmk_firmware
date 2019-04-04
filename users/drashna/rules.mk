@@ -1,4 +1,5 @@
-SRC += drashna.c
+SRC += drashna.c \
+       process_records.c
 
 ifneq ("$(wildcard $(USER_PATH)/secrets.c)","")
   SRC += secrets.c
@@ -42,15 +43,6 @@ ifdef CONSOLE_ENABLE
   endif
 endif
 
-
-ifeq ($(strip $(UCIS_ENABLE)), yes)
-  SRC += send_unicode.c
-endif
-
-ifeq ($(strip $(UNICODEMAP_ENABLE)), yes)
-  SRC += send_unicode.c
-endif
-
-ifeq ($(strip $(UNICODE_ENABLE)), yes)
-  SRC += send_unicode.c
+ifeq ($(strip $(MAKE_BOOTLOADER)), yes)
+    OPT_DEFS += -DMAKE_BOOTLOADER
 endif
