@@ -250,7 +250,10 @@ uint32_t layer_state_set_user(uint32_t state) {
     uint8_t layer = biton32(state);
 
     // TODO: TEST if this is enough or we need the full check
-    mouse_lock = false;
+    if (mouse_lock) {
+      mouse_lock = false;
+      mousekey_off(KC_BTN1);
+    }
     /*if (mouse_lock && !(state & (1UL << MOUSE))) mouse_lock = false;*/
 
     switch (layer) {
@@ -404,6 +407,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         // Mouse lock
         case XX_M_LK:
             mouse_lock = !mouse_lock;
+            if (mouse_lock) {
+              mousekey_on(KC_BTN1);
+            } else {
+              mousekey_off(KC_BTN1);
+            }
             return false;
 
         // Firmware info
