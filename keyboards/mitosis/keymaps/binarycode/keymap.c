@@ -48,13 +48,10 @@ enum custom_keycodes {
     // Application switching
     XX_SW_L,
     XX_SW_G,
+    // Clipboard
+    XX_COPY,
+    XX_PAST,
 };
-
-// Merge copy-paste with modifiers
-#define XX_LCTL LCTL_T(KC_COPY)
-#define XX_RCTL RCTL_T(KC_COPY)
-#define XX_LALT LALT_T(KC_PASTE)
-#define XX_RALT RALT_T(KC_PASTE)
 
 // For consistency with diagonal mouse keys
 #define XX_M_N KC_MS_UP
@@ -69,10 +66,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* BASE LAYER
  * KC_QUOT (') is swapped in place of KC_SLSH (/)
- * HOLD LCTRL for LCTRL, TAP LCTRL for COPY
- * HOLD RCTRL for RCTRL, TAP RCTRL for COPY
- * HOLD LALT for LALT, TAP LALT for PASTE
- * HOLD RALT for RALT, TAP RALT for PASTE
  * HOLD FN for FUNCTION layer, TAP FN for TAB
  * HOLD NUM for NUMPAD layer, TAP NUM for KC_UNDR (_)
  * HOLD LOCK for key lock (works only for FN and NUM)
@@ -92,8 +85,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,      KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
     KC_A,    KC_S,    KC_D,    KC_F,    KC_G,      KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
     KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,      KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_QUOT,
-             KC_LGUI, XX_LCTL, KC_ESC,  XX_L_FN,   XX_L_NM, KC_BSPC, XX_RCTL, KC_RGUI,
-             XX_LOCK, XX_LALT, KC_SPC,  KC_LSPO,   KC_RSPC, KC_ENT,  XX_RALT, XX_LOCK
+             KC_LGUI, KC_LCTL, KC_ESC,  XX_L_FN,   XX_L_NM, KC_BSPC, KC_RCTL, KC_RGUI,
+             XX_LOCK, KC_LALT, KC_SPC,  KC_LSPO,   KC_RSPC, KC_ENT,  KC_RALT, XX_LOCK
 ),
 
 /* NUMPAD LAYER
@@ -147,7 +140,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * .--------------------------------------------. .--------------------------------------------.
  * | XXXXXX | XXXXXX | XXXXXX | XXXXXX | XXXXXX | | MOUSE  | XXXXXX | XXXXXX | XXXXXX | XXXXXX |
  * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | XXXXXX | XXXXXX | XXXXXX | SWT_LO | XXXXXX | | XXXXXX | SWT_GL | XXXXXX | XXXXXX | XXXXXX |
+ * | XXXXXX | COPY   | XXXXXX | SWT_LO | XXXXXX | | XXXXXX | SWT_GL | XXXXXX | PASTE  | XXXXXX |
  * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
  * | XXXXXX | XXXXXX | XXXXXX | XXXXXX | XXXXXX | | XXXXXX | XXXXXX | XXXXXX | XXXXXX | INFO   |
  * '--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------'
@@ -158,7 +151,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 [MACRO] = LAYOUT(
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XX_L_MS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    XXXXXXX, XXXXXXX, XXXXXXX, XX_SW_L, XXXXXXX,   XXXXXXX, XX_SW_G, XXXXXXX, XXXXXXX, XXXXXXX,
+    XXXXXXX, XX_COPY, XXXXXXX, XX_SW_L, XXXXXXX,   XXXXXXX, XX_SW_G, XXXXXXX, XX_PAST, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XX_INFO,
              _______, _______, _______, _______,   _______, _______, _______, _______,
              _______, _______, _______, _______,   _______, _______, _______, _______
@@ -251,6 +244,20 @@ bool switch_layer(bool pressed, int layer, bool lock, bool* interrupted, const c
     return false;
 }
 
+inline bool copy_to_clipboard(bool pressed) {
+    if (pressed) {
+        SEND_STRING(SS_LCTRL(SS_TAP(X_INSERT)));
+    }
+    return false;
+}
+
+inline bool paste_from_clipboard(bool pressed) {
+    if (pressed) {
+        SEND_STRING(SS_LSFT(SS_TAP(X_INSERT)));
+    }
+    return false;
+}
+
 uint32_t layer_state_set_user(uint32_t state) {
     toggle_mouse_lock(false);
 
@@ -322,6 +329,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case XX_SW_G:
             return app_switch_global(pressed);
+
+        case XX_COPY:
+            return copy_to_clipboard(pressed);
+
+        case XX_PAST:
+            return paste_from_clipboard(pressed);
     }
     return true;
 }
