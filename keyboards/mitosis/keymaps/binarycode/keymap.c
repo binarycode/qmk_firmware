@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "version.h"
 #include "mousekey.h"
 
-enum layers {
+// Layers
+enum {
   BASE,
   NUMPAD,
   FUNCTION,
@@ -28,7 +29,8 @@ enum layers {
   MOUSE
 };
 
-enum custom_keycodes {
+// Custom keycodes
+enum {
     XX_NOP = SAFE_RANGE,
     // Diagonal mouse keys
     XX_M_NE,
@@ -45,12 +47,12 @@ enum custom_keycodes {
     XX_M_LK,
     // Firmware info
     XX_INFO,
-    // Application switching
-    XX_SW_L,
-    XX_SW_G,
-    // Clipboard
-    XX_COPY,
-    XX_PAST,
+};
+
+// Tap dances
+enum {
+    TD_LOCAL_APP_SWITCH,
+    TD_GLOBAL_APP_SWITCH
 };
 
 // For consistency with diagonal mouse keys
@@ -61,6 +63,9 @@ enum custom_keycodes {
 
 // Toggle MOUSE layout
 #define XX_L_MS TG(MOUSE)
+
+#define XX_SW_L TD(TD_LOCAL_APP_SWITCH)
+#define XX_SW_G TD(TD_GLOBAL_APP_SWITCH)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -151,7 +156,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 [MACRO] = LAYOUT(
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XX_L_MS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    XXXXXXX, XX_COPY, XXXXXXX, XX_SW_L, XXXXXXX,   XXXXXXX, XX_SW_G, XXXXXXX, XX_PAST, XXXXXXX,
+    XXXXXXX, KC_COPY, XXXXXXX, XX_SW_L, XXXXXXX,   XXXXXXX, XX_SW_G, XXXXXXX, KC_PSTE, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XX_INFO,
              _______, _______, _______, _______,   _______, _______, _______, _______,
              _______, _______, _______, _______,   _______, _______, _______, _______
@@ -208,20 +213,6 @@ bool toggle_mouse_lock(bool pressed) {
     return false;
 }
 
-inline bool app_switch_local(bool pressed) {
-    if (pressed) {
-        SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_ESCAPE) SS_UP(X_LALT));
-    }
-    return false;
-}
-
-inline bool app_switch_global(bool pressed) {
-    if (pressed) {
-        SEND_STRING(SS_DOWN(X_LGUI) SS_TAP(X_TAB) SS_UP(X_LGUI));
-    }
-    return false;
-}
-
 inline bool firmware_info(bool pressed) {
     if (pressed) {
         SEND_STRING(QMK_KEYBOARD "/" QMK_KEYMAP " @ " QMK_VERSION);
@@ -240,20 +231,6 @@ bool switch_layer(bool pressed, int layer, bool lock, bool* interrupted, const c
             send_string_P(str);
         }
         layer_off(layer);
-    }
-    return false;
-}
-
-inline bool copy_to_clipboard(bool pressed) {
-    if (pressed) {
-        SEND_STRING(SS_LCTRL(SS_TAP(X_INSERT)));
-    }
-    return false;
-}
-
-inline bool paste_from_clipboard(bool pressed) {
-    if (pressed) {
-        SEND_STRING(SS_LSFT(SS_TAP(X_INSERT)));
     }
     return false;
 }
@@ -323,18 +300,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case XX_INFO:
             return firmware_info(pressed);
-
-        case XX_SW_L:
-            return app_switch_local(pressed);
-
-        case XX_SW_G:
-            return app_switch_global(pressed);
-
-        case XX_COPY:
-            return copy_to_clipboard(pressed);
-
-        case XX_PAST:
-            return paste_from_clipboard(pressed);
     }
     return true;
 }
@@ -342,3 +307,34 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 void keyboard_post_init_user() {
     set_led_off;
 }
+
+void local_app_switch(qk_tap_dance_state_t* state, void* user_data) {
+    if (!(get_mods() & MOD_BIT(KC_LALT))) {
+        SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_ESCAPE));
+    } else {
+        SEND_STRING(SS_TAP(X_ESCAPE));
+    }
+}
+
+void local_app_switch_finished(qk_tap_dance_state_t* state, void* user_data) {
+    SEND_STRING(SS_UP(X_LALT));
+}
+
+void global_app_switch(qk_tap_dance_state_t* state, void* user_data) {
+    if (!(get_mods() & MOD_BIT(KC_LGUI))) {
+        SEND_STRING(SS_DOWN(X_LGUI) SS_TAP(X_TAB));
+    } else {
+        SEND_STRING(SS_TAP(X_TAB));
+    }
+}
+
+void global_app_switch_finished(qk_tap_dance_state_t* state, void* user_data) {
+    SEND_STRING(SS_UP(X_LGUI));
+}
+
+qk_tap_dance_action_t tap_dance_actions[] = {
+ [TD_LOCAL_APP_SWITCH]  = ACTION_TAP_DANCE_FN_ADVANCED_TIME(local_app_switch, local_app_switch_finished, NULL, 380),
+ [TD_GLOBAL_APP_SWITCH] = ACTION_TAP_DANCE_FN_ADVANCED_TIME(global_app_switch, global_app_switch_finished, NULL, 380),
+};
+
+/* vim: set ts=4 sw=4 sts=4 et: */
