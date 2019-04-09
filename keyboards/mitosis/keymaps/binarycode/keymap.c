@@ -20,12 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "version.h"
 #include "mousekey.h"
 
-// TODO: TEST the LED logic still works
-// TODO: leader-v for version? or at least version format
-// TODO: copy-paste keycodes - test they work on linux, maybe combine with ctrl/alt
-// TODO: proper file format - headers etc
-// TODO: play with autoshift
-
 enum layers {
   BASE,
   NUMPAD,
@@ -47,27 +41,13 @@ enum custom_keycodes {
     XX_L_MS,
     // Locking
     XX_LOCK,
-    // Brackets + shift-tap
-    XX_LBRC,
-    XX_LCBR,
-    XX_LABK,
-    // Arrows + shift-tap
-    XX_UP,
-    XX_DOWN,
-    XX_LEFT,
-    XX_RGHT,
-    // Mouse keys + shift-tap
-    XX_M_N,
-    XX_M_S,
-    XX_M_W,
-    XX_M_E,
     // Mouse selection lock
     XX_M_LK,
     // Firmware info
     XX_INFO,
     // Application switching
     XX_SW_L,
-    XX_SW_G
+    XX_SW_G,
 };
 
 // Merge copy-paste with modifiers
@@ -75,6 +55,12 @@ enum custom_keycodes {
 #define XX_RCTL RCTL_T(KC_COPY)
 #define XX_LALT LALT_T(KC_PASTE)
 #define XX_RALT RALT_T(KC_PASTE)
+
+// For consistency with diagonal mouse keys
+#define XX_M_N KC_MS_UP
+#define XX_M_S KC_MS_DOWN
+#define XX_M_W KC_MS_LEFT
+#define XX_M_E KC_MS_RIGHT
 
 // Toggle MOUSE layout
 #define XX_L_MS TG(MOUSE)
@@ -111,7 +97,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 
 /* NUMPAD LAYER
- * TODO: KC_0 hides LCTRL - is that a problem?
  * .--------------------------------------------. .--------------------------------------------.
  * | `      | 7      | 8      | 9      | -      | |        |        |        |        |        |
  * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
@@ -134,19 +119,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* FUNCTION LAYER
  * contains keys that did not fit on BASE layer ([, ], \, ', /)
- * TAP LEFT for LEFT, SHIFT-TAP LEFT for HOME
- * TAP DOWN for DOWN, SHIFT-TAP DOWN for PGDOWN
- * TAP UP for UP, SHIFT-TAP UP for PGUP
- * TAP RIGHT for RIGHT, SHIFT-TAP RIGHT for END
- * TAP LBRC for LBRC, SHIFT-TAP LBRC for RBRC
- * TAP LCBR for LCBR, SHIFT-TAP LCBR for RCBR
- * TAP LABK for LABK, SHIFT-TAP LABK for RABK
  * .--------------------------------------------. .--------------------------------------------.
  * |        |        |        |        |        | | XXXXXX | XXXXXX | [      | ]      | \      |
  * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
  * |        |        |        |        |        | | LEFT   | DOWN   | UP     | RIGHT  | '      |
  * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * |        |        |        |        |        | | [ / ]  | { / }  | < / >  | XXXXXX | /      |
+ * |        |        |        |        |        | | XXXXXX | XXXXXX | XXXXXX | XXXXXX | /      |
  * '--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------'
  *          |        |        |        |        | |        |        |        |        |
  *          |--------+--------+--------+--------| |--------+--------+--------+--------|
@@ -155,8 +133,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 [FUNCTION] = LAYOUT(
     _______, _______, _______, _______, _______,   XXXXXXX, XXXXXXX, KC_LBRC, KC_RBRC, KC_BSLS,
-    _______, _______, _______, _______, _______,   XX_LEFT, XX_DOWN, XX_UP,   XX_RGHT, KC_QUOT,
-    _______, _______, _______, _______, _______,   XX_LBRC, XX_LCBR, XX_LABK, XXXXXXX, KC_SLSH,
+    _______, _______, _______, _______, _______,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_QUOT,
+    _______, _______, _______, _______, _______,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_SLSH,
              _______, _______, _______, _______,   _______, _______, _______, _______,
              _______, _______, _______, _______,   _______, _______, _______, _______
 ),
@@ -187,10 +165,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 
 /* MOUSE LAYER
- * TAP M_N for KC_MS_UP, SHIFT-TAP M_N for KC_MS_WH_UP
- * TAP M_S for KC_MS_DOWN, SHIFT-TAP M_S for KC_MS_WH_DOWN
- * TAP M_W for KC_MS_LEFT, SHIFT-TAP M_W for KC_MS_WH_LEFT
- * TAP M_E for KC_MS_RIGHT, SHIFT-TAP M_E for KC_MS_WH_RIGHT
  * TAP M_NW for KC_MS_UP + KC_MS_LEFT
  * TAP M_NE for KC_MS_UP + KC_MS_RIGHT
  * TAP M_SW for KC_MS_DOWN + KC_MS_LEFT
@@ -218,9 +192,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 };
 
-static bool mouse_lock = false;
-
-void mousekey_diagonal(bool pressed, uint16_t key1, uint16_t key2) {
+bool mousekey_diagonal(bool pressed, uint16_t key1, uint16_t key2) {
     if (pressed) {
         mousekey_on(key1);
         mousekey_on(key2);
@@ -229,34 +201,62 @@ void mousekey_diagonal(bool pressed, uint16_t key1, uint16_t key2) {
         mousekey_off(key2);
     }
     mousekey_send();
+    return false;
 }
 
-void shift_tap(bool pressed, uint16_t* current, uint16_t unshifted, uint16_t shifted) {
-    if (pressed) {
-        if (get_mods() & (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_RSHIFT))) {
-          *current = shifted;
-        } else {
-          *current = unshifted;
-        }
-        register_code(*current);
+bool toggle_mouse_lock(bool pressed) {
+    static bool mouse_lock = false;
+    mouse_lock = pressed;
+    if (mouse_lock) {
+        mousekey_on(KC_BTN1);
     } else {
-        unregister_code(*current);
+        mousekey_off(KC_BTN1);
     }
+    return false;
+}
+
+inline bool app_switch_local(bool pressed) {
+    if (pressed) {
+        SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_ESCAPE) SS_UP(X_LALT));
+    }
+    return false;
+}
+
+inline bool app_switch_global(bool pressed) {
+    if (pressed) {
+        SEND_STRING(SS_DOWN(X_LGUI) SS_TAP(X_TAB) SS_UP(X_LGUI));
+    }
+    return false;
+}
+
+inline bool firmware_info(bool pressed) {
+    if (pressed) {
+        SEND_STRING(QMK_KEYBOARD "/" QMK_KEYMAP " @ " QMK_VERSION);
+    }
+    return false;
+}
+
+bool switch_layer(bool pressed, int layer, bool lock, bool* interrupted, const char* str) {
+    static uint16_t timer = 0;
+    if (pressed) {
+        timer = timer_read();
+        *interrupted = false;
+        layer_on(layer);
+    } else if (!lock) {
+        if (!*interrupted && (timer_elapsed(timer) < TAPPING_TERM)) {
+            send_string_P(str);
+        }
+        layer_off(layer);
+    }
+    return false;
 }
 
 uint32_t layer_state_set_user(uint32_t state) {
+    toggle_mouse_lock(false);
+
     state = update_tri_layer_state(state, NUMPAD, FUNCTION, MACRO);
 
-    uint8_t layer = biton32(state);
-
-    // TODO: TEST if this is enough or we need the full check
-    if (mouse_lock) {
-      mouse_lock = false;
-      mousekey_off(KC_BTN1);
-    }
-    /*if (mouse_lock && !(state & (1UL << MOUSE))) mouse_lock = false;*/
-
-    switch (layer) {
+    switch (biton32(state)) {
         case BASE:
             set_led_off;
             break;
@@ -281,158 +281,51 @@ uint32_t layer_state_set_user(uint32_t state) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    static bool lock = false;
+    const bool pressed = record->event.pressed;
 
-    static uint16_t lbrc_keycode  = KC_LBRC;
-    static uint16_t lcbr_keycode  = KC_LCBR;
-    static uint16_t labk_keycode  = KC_LABK;
-    static uint16_t up_keycode    = KC_UP;
-    static uint16_t down_keycode  = KC_DOWN;
-    static uint16_t left_keycode  = KC_LEFT;
-    static uint16_t right_keycode = KC_RGHT;
-    static uint16_t north_keycode = KC_MS_UP;
-    static uint16_t south_keycode = KC_MS_DOWN;
-    static uint16_t west_keycode  = KC_MS_LEFT;
-    static uint16_t east_keycode  = KC_MS_RIGHT;
+    static bool lock        = false;
+    static bool interrupted = false;
 
-    static uint16_t unds_timer   = 0;
-    static uint16_t tab_timer    = 0;
-    static bool unds_interrupted = false;
-    static bool tab_interrupted  = false;
-
-    if (keycode != XX_L_NM) unds_interrupted = true;
-    if (keycode != XX_L_FN) tab_interrupted  = true;
+    if (pressed) interrupted = true;
 
     switch (keycode) {
-        // Diagonal mouse keys
         case XX_M_NE:
-            mousekey_diagonal(record->event.pressed, KC_MS_UP, KC_MS_RIGHT);
-            return false;
+            return mousekey_diagonal(pressed, KC_MS_UP, KC_MS_RIGHT);
 
         case XX_M_NW:
-            mousekey_diagonal(record->event.pressed, KC_MS_UP, KC_MS_LEFT);
-            return false;
+            return mousekey_diagonal(pressed, KC_MS_UP, KC_MS_LEFT);
 
         case XX_M_SE:
-            mousekey_diagonal(record->event.pressed, KC_MS_DOWN, KC_MS_RIGHT);
-            return false;
+            return mousekey_diagonal(pressed, KC_MS_DOWN, KC_MS_RIGHT);
 
         case XX_M_SW:
-            mousekey_diagonal(record->event.pressed, KC_MS_DOWN, KC_MS_LEFT);
-            return false;
+            return mousekey_diagonal(pressed, KC_MS_DOWN, KC_MS_LEFT);
 
-        // Key lock
         case XX_LOCK:
-            lock = record->event.pressed;
+            lock = pressed;
             return false;
 
-        // Layer modifiers
         case XX_L_NM:
-            if (record->event.pressed) {
-                unds_timer       = timer_read();
-                unds_interrupted = false;
-                layer_on(NUMPAD);
-            } else if (!lock) {
-                if (!unds_interrupted && (timer_elapsed(unds_timer) < TAPPING_TERM)) {
-                    register_code(KC_LSFT);
-                    register_code(KC_MINS);
-                    unregister_code(KC_MINS);
-                    unregister_code(KC_LSFT);
-                }
-                layer_off(NUMPAD);
-            }
-            return false;
+            return switch_layer(pressed, NUMPAD, lock, &interrupted, PSTR("_"));
 
         case XX_L_FN:
-            if (record->event.pressed) {
-                tab_timer       = timer_read();
-                tab_interrupted = false;
-                layer_on(FUNCTION);
-            } else if (!lock) {
-                if (!tab_interrupted && (timer_elapsed(tab_timer) < TAPPING_TERM)) {
-                    register_code(KC_TAB);
-                    unregister_code(KC_TAB);
-                }
-                layer_off(FUNCTION);
-            }
-            return false;
+            return switch_layer(pressed, FUNCTION, lock, &interrupted, PSTR(SS_TAP(X_TAB)));
 
-        // Brackets + shift-tap
-        case XX_LBRC:
-            shift_tap(record->event.pressed, &lbrc_keycode, KC_LBRC, KC_RBRC);
-            return false;
-
-        case XX_LCBR:
-            shift_tap(record->event.pressed, &lcbr_keycode, KC_LCBR, KC_RCBR);
-            return false;
-
-        case XX_LABK:
-            shift_tap(record->event.pressed, &labk_keycode, KC_LABK, KC_RABK);
-            return false;
-
-        // Arrows + shift-tap
-        case XX_UP:
-            shift_tap(record->event.pressed, &up_keycode, KC_UP, KC_PGUP);
-            return false;
-
-        case XX_DOWN:
-            shift_tap(record->event.pressed, &down_keycode, KC_DOWN, KC_PGDOWN);
-            return false;
-
-        case XX_LEFT:
-            shift_tap(record->event.pressed, &left_keycode, KC_LEFT, KC_HOME);
-            return false;
-
-        case XX_RGHT:
-            shift_tap(record->event.pressed, &right_keycode, KC_RIGHT, KC_END);
-            return false;
-
-        // Mouse keys + shift-tap
-        case XX_M_N:
-            shift_tap(record->event.pressed, &north_keycode, KC_MS_UP, KC_MS_WH_UP);
-            return false;
-
-        case XX_M_S:
-            shift_tap(record->event.pressed, &south_keycode, KC_MS_DOWN, KC_MS_WH_DOWN);
-            return false;
-
-        case XX_M_W:
-            shift_tap(record->event.pressed, &west_keycode, KC_MS_LEFT, KC_MS_WH_LEFT);
-            return false;
-
-        case XX_M_E:
-            shift_tap(record->event.pressed, &east_keycode, KC_MS_RIGHT, KC_MS_WH_RIGHT);
-            return false;
-
-        // Mouse lock
         case XX_M_LK:
-            mouse_lock = !mouse_lock;
-            if (mouse_lock) {
-              mousekey_on(KC_BTN1);
-            } else {
-              mousekey_off(KC_BTN1);
-            }
-            return false;
+            return toggle_mouse_lock(pressed);
 
-        // Firmware info
         case XX_INFO:
-            if (record->event.pressed) {
-              SEND_STRING(QMK_KEYBOARD "/" QMK_KEYMAP " @ " QMK_VERSION ", Built on: " QMK_BUILDDATE);
-            }
-            return false;
+            return firmware_info(pressed);
 
-        // Application switching
         case XX_SW_L:
-            if (record->event.pressed) {
-              SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_ESCAPE) SS_UP(X_LALT));
-            }
-            return false;
+            return app_switch_local(pressed);
 
         case XX_SW_G:
-            if (record->event.pressed) {
-              SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_TAB) SS_UP(X_LALT));
-            }
-            return false;
+            return app_switch_global(pressed);
     }
     return true;
+}
+
+void keyboard_post_init_user() {
+    set_led_off;
 }
