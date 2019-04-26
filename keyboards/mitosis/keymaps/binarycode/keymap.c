@@ -20,14 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "version.h"
 #include "mousekey.h"
 
-#define ALT_ESC_TIMEOUT 380
-#define GUI_TAB_TIMEOUT 380
-
 // Layers
 enum {
   BASE,
   NUMPAD,
-  FUNCTION,
+  NAVIGATION,
   MACRO,
   MOUSE
 };
@@ -36,130 +33,127 @@ enum {
 enum {
     _NOP = SAFE_RANGE,
     // Diagonal mouse keys
-    _MS_NE,
-    _MS_NW,
-    _MS_SE,
-    _MS_SW,
+    KC_MS_NE,
+    KC_MS_NW,
+    KC_MS_SE,
+    KC_MS_SW,
     // Mouse selection lock
-    _MS_LK,
-    // Extended MO(layer)
-    _MO_NM,
-    _MO_FN,
+    KC_MS_LK,
     // Firmware info
-    _INFO,
+    KC_INFO,
 };
 
 // Tap dances
 enum {
-    TD_ALTESC,
-    TD_GUITAB
+    TD_L_RAISE,
+    TD_L_LOWER,
+    TD_R_RAISE,
+    TD_R_LOWER
+};
+
+// Tap dance states
+enum {
+    UNKNOWN,
+    SINGLE_TAP,
+    SINGLE_HOLD,
+    DOUBLE_TAP,
+    DOUBLE_HOLD,
+    TRIPLE_TAP,
+    TRIPLE_HOLD
 };
 
 // For consistency with diagonal mouse keys
-#define _MS_N KC_MS_UP
-#define _MS_S KC_MS_DOWN
-#define _MS_W KC_MS_LEFT
-#define _MS_E KC_MS_RIGHT
+#define KC_MS_N KC_MS_UP
+#define KC_MS_S KC_MS_DOWN
+#define KC_MS_W KC_MS_LEFT
+#define KC_MS_E KC_MS_RIGHT
 
 // Toggle layout
-#define _TG_NM TG(NUMPAD)
-#define _TG_FN TG(FUNCTION)
-#define _TG_MS TG(MOUSE)
+#define KC_MOUSE TG(MOUSE)
 
 // Tap dance
-#define _ALTESC TD(TD_ALTESC)
-#define _GUITAB TD(TD_GUITAB)
+#define KC_L_RSE  TD(TD_L_RAISE)
+#define KC_L_LWR  TD(TD_L_LOWER)
+#define KC_R_RSE  TD(TD_R_RAISE)
+#define KC_R_LWR  TD(TD_R_LOWER)
+
+// Copy/paste
+#define KC_COPY  LCTL(KC_C)
+#define KC_PASTE LCTL(KC_V)
+
+#define KC_    KC_TRNS
+#define KC_XXX KC_NO
+
+#define MOD_MASK_SHIFT (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_RSHIFT))
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* BASE LAYER
- * HOLD MO(FN) for FUNCTION layer, TAP MO(FN) for KC_TAB
- * HOLD MO(NM) for NUMPAD layer, TAP MO(NM) for KC_UNDR (_)
- * .--------------------------------------------. .--------------------------------------------.
- * | Q      | W      | E      | R      | T      | | Y      | U      | I      | O      | P      |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | A      | S      | D      | F      | G      | | H      | J      | K      | L      | ;      |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | Z      | X      | C      | V      | B      | | N      | M      | ,      | .      | /      |
- * '--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------'
- *          | LGUI   | LCTRL  | ESC    | MO(FN) | | MO(NM) | BACKSP | RCTRL  | RGUI   |
- *          |--------+--------+--------+--------| |--------+--------+--------+--------|
- *          | TG(FN) | LALT   | SPACE  | LSHIFT | | RSHIFT | ENTER  | RALT   | TG(NM) |
- *          '-----------------------------------' '-----------------------------------'
+ * HOLD NAV for NAVIGATION layer, TAP NAV for KC_TAB
+ * HOLD NUM for NUMPAD layer, TAP NUM for KC_UNDR (_)
  */
-[BASE] = LAYOUT(
-    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,      KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
-    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,      KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
-    KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,      KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
-             KC_LGUI, KC_LCTL, KC_ESC,  _MO_FN,    _MO_NM,  KC_BSPC, KC_RCTL, KC_RGUI,
-             _TG_FN,  KC_LALT, KC_SPC,  KC_LSPO,   KC_RSPC, KC_ENT,  KC_RALT, _TG_NM
+[BASE] = LAYOUT_kc(
+//  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
+        Q   ,   W   ,   E   ,   R   ,   T   ,        Y   ,   U   ,   I   ,   O   ,   P   ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+        A   ,   S   ,   D   ,   F   ,   G   ,        H   ,   J   ,   K   ,   L   , SCLN  ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+        Z   ,   X   ,   C   ,   V   ,   B   ,        N   ,   M   , COMM  ,  DOT  , SLSH  ,
+//  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
+              LGUI  , LCTL  ,  ESC  , L_LWR ,      R_LWR , BSPC  , RCTL  , RGUI  ,
+//          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
+               XXX  , LALT  ,  SPC  , L_RSE ,      R_RSE ,  ENT  , RALT  ,  XXX
+//          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
 /* NUMPAD LAYER
- * .--------------------------------------------. .--------------------------------------------.
- * | `      | 7      | 8      | 9      | -      | |        |        |        |        |        |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | XXXXXX | 4      | 5      | 6      | +      | |        |        |        |        |        |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | XXXXXX | 1      | 2      | 3      | =      | |        |        |        |        |        |
- * '--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------'
- *          |        | 0      |        |        | |        |        |        |        |
- *          |--------+--------+--------+--------| |--------+--------+--------+--------|
- *          |        |        |        |        | |        |        |        |        |
- *          '-----------------------------------' '-----------------------------------'
  */
-[NUMPAD] = LAYOUT(
-    KC_GRV,  KC_7,    KC_8,    KC_9,    KC_MINS,   _______, _______, _______, _______, _______,
-    XXXXXXX, KC_4,    KC_5,    KC_6,    KC_PLUS,   _______, _______, _______, _______, _______,
-    XXXXXXX, KC_1,    KC_2,    KC_3,    KC_EQL,    _______, _______, _______, _______, _______,
-             _______, KC_0,    _______, _______,   _______, _______, _______, _______,
-             _______, _______, _______, _______,   _______, _______, _______, _______
+[NUMPAD] = LAYOUT_kc(
+//  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
+       GRV  ,   7   ,   8   ,   9   , MINS  ,            ,       ,       ,       ,       ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+       XXX  ,   4   ,   5   ,   6   ,  EQL  ,            ,       ,       ,       ,       ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+       XXX  ,   1   ,   2   ,   3   ,   0   ,            ,       ,       ,       ,       ,
+//  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
+                    ,       ,       ,       ,            ,       ,       ,       ,
+//          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
+                    ,       ,       ,       ,            ,       ,       ,
+//          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
-/* FUNCTION LAYER
+/* NAVIGATION LAYER
  * contains keys that did not fit on BASE layer ([, ], \, ')
- * .--------------------------------------------. .--------------------------------------------.
- * |        |        |        |        |        | | XXXXXX | XXXXXX | [      | ]      | \      |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * |        |        |        |        |        | | LEFT   | DOWN   | UP     | RIGHT  | '      |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * |        |        |        |        |        | | XXXXXX | XXXXXX | XXXXXX | XXXXXX | XXXXXX |
- * '--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------'
- *          |        |        |        |        | |        |        |        |        |
- *          |--------+--------+--------+--------| |--------+--------+--------+--------|
- *          |        |        |        |        | |        |        |        |        |
- *          '-----------------------------------' '-----------------------------------'
  */
-[FUNCTION] = LAYOUT(
-    _______, _______, _______, _______, _______,   XXXXXXX, XXXXXXX, KC_LBRC, KC_RBRC, KC_BSLS,
-    _______, _______, _______, _______, _______,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_QUOT,
-    _______, _______, _______, _______, _______,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-             _______, _______, _______, _______,   _______, _______, _______, _______,
-             _______, _______, _______, _______,   _______, _______, _______, _______
+[NAVIGATION] = LAYOUT_kc(
+//  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
+            ,       ,       ,       ,       ,       XXX  ,  XXX  , LBRC  , RBRC  , BSLS  ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+            ,       ,       ,       ,       ,      LEFT  , DOWN  ,  UP   , RGHT  , QUOT  ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+            ,       ,       ,       ,       ,      HOME  , PGDN  , PGUP  , END   ,  XXX  ,
+//  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
+                    ,       ,       ,       ,            ,       ,       ,       ,
+//          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
+                    ,       ,       ,       ,            ,       ,       ,
+//          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
 /* MACRO LAYER
  * TAP INFO to get firmware information
- * TAP ALTESC to switch between apps in the same workspace (ALT+ESC)
- * TAP GUITAB to switch between apps (GUI+TAB)
- * .--------------------------------------------. .--------------------------------------------.
- * | XXXXXX | XXXXXX | XXXXXX | XXXXXX | XXXXXX | | TG(MS) | XXXXXX | XXXXXX | XXXXXX | XXXXXX |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | XXXXXX | COPY   | XXXXXX | ALTESC | XXXXXX | | XXXXXX | GUITAB | XXXXXX | PASTE  | XXXXXX |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | XXXXXX | XXXXXX | XXXXXX | XXXXXX | XXXXXX | | XXXXXX | XXXXXX | XXXXXX | XXXXXX | INFO   |
- * '--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------'
- *          |        |        |        |        | |        |        |        |        |
- *          |--------+--------+--------+--------| |--------+--------+--------+--------|
- *          |        |        |        |        | |        |        |        |        |
- *          '-----------------------------------' '-----------------------------------'
  */
-[MACRO] = LAYOUT(
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   _TG_MS,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    XXXXXXX, KC_COPY, XXXXXXX, _ALTESC, XXXXXXX,   XXXXXXX, _GUITAB, XXXXXXX, KC_PSTE, XXXXXXX,
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _INFO,
-             _______, _______, _______, _______,   _______, _______, _______, _______,
-             _______, _______, _______, _______,   _______, _______, _______, _______
+[MACRO] = LAYOUT_kc(
+//  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
+       XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,       XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+       XXX  ,  XXX  ,  XXX  , COPY  ,  XXX  ,       XXX  , PASTE , MOUSE ,  XXX  ,  XXX  ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+       XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,       XXX  ,  XXX  ,  XXX  ,  XXX  , INFO  ,
+//  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
+                    ,       ,       ,       ,            ,       ,       ,       ,
+//          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
+                    ,       ,       ,       ,            ,       ,       ,
+//          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
 /* MOUSE LAYER
@@ -168,29 +162,22 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * TAP M_SW for KC_MS_DOWN + KC_MS_LEFT
  * TAP M_SE for KC_MS_DOWN + KC_MS_RIGHT
  * TAP MS_LK to lock/unlock mouse selection
- * .--------------------------------------------. .--------------------------------------------.
- * | XXXXXX | XXXXXX | XXXXXX | BTN2   | XXXXXX | | XXXXXX | MS_NW  | MS_N   | MS_NE  | XXXXXX |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | XXXXXX | SLOW   | FAST   | BTN1   | XXXXXX | | XXXXXX | MS_W   | MS_LK  | MS_E   | XXXXXX |
- * |--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------|
- * | XXXXXX | XXXXXX | XXXXXX | BTN3   | XXXXXX | | XXXXXX | MS_SW  | MS_S   | MS_SE  | XXXXXX |
- * '--------+--------+--------+--------+--------| |--------+--------+--------+--------+--------'
- *          |        |        |        | TG(MS) | | TG(MS) |        |        |        |
- *          |--------+--------+--------+--------| |--------+--------+--------+--------|
- *          |        |        |        |        | |        |        |        |        |
- *          '-----------------------------------' '-----------------------------------'
  */
-[MOUSE] = LAYOUT(
-    XXXXXXX, XXXXXXX, XXXXXXX, KC_BTN2, XXXXXXX,   XXXXXXX, _MS_NW,  _MS_N,   _MS_NE,  XXXXXXX,
-    XXXXXXX, KC_ACL0, KC_ACL2, KC_BTN1, XXXXXXX,   XXXXXXX, _MS_W,   _MS_LK,  _MS_E,   XXXXXXX,
-    XXXXXXX, XXXXXXX, XXXXXXX, KC_BTN3, XXXXXXX,   XXXXXXX, _MS_SW,  _MS_S,   _MS_SE,  XXXXXXX,
-             _______, _______, _______, _TG_MS,    _TG_MS,  _______, _______, _______,
-             _______, _______, _______, _______,   _______, _______, _______, _______
+[MOUSE] = LAYOUT_kc(
+//  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
+       XXX  , BTN3  , BTN2  , BTN1  ,  XXX  ,       XXX  , MS_NW , MS_N  , MS_NE ,  XXX  ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+       XXX  ,  XXX  ,  XXX  , COPY  ,  XXX  ,       XXX  , MS_W  , MS_LK , MS_E  ,  XXX  ,
+//  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
+       XXX  , ACL0  , ACL1  , ACL2  ,  XXX  ,       XXX  , MS_SW , MS_S  , MS_SE ,  XXX  ,
+//  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
+                    ,       ,       , MOUSE ,      MOUSE ,       ,       ,       ,
+//          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
+                    ,       ,       ,       ,            ,       ,       ,
+//          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
 };
-
-static bool interrupted = false;
 
 bool mousekey_diagonal(bool pressed, uint16_t key1, uint16_t key2) {
     if (pressed) {
@@ -222,25 +209,10 @@ inline bool firmware_info(bool pressed) {
     return false;
 }
 
-bool mo_ext(bool pressed, uint8_t layer, const char* str) {
-    static uint16_t timer = 0;
-    if (pressed) {
-        timer = timer_read();
-        interrupted = false;
-        layer_on(layer);
-    } else {
-        if (!interrupted && (timer_elapsed(timer) < TAPPING_TERM)) {
-            send_string_P(str);
-        }
-        layer_off(layer);
-    }
-    return false;
-}
-
 uint32_t layer_state_set_user(uint32_t state) {
     toggle_mouse_lock(false);
 
-    state = update_tri_layer_state(state, NUMPAD, FUNCTION, MACRO);
+    state = update_tri_layer_state(state, NUMPAD, NAVIGATION, MACRO);
 
     switch (biton32(state)) {
         case BASE:
@@ -249,7 +221,7 @@ uint32_t layer_state_set_user(uint32_t state) {
         case NUMPAD:
             set_led_blue;
             break;
-        case FUNCTION:
+        case NAVIGATION:
             set_led_red;
             break;
         case MACRO:
@@ -257,6 +229,7 @@ uint32_t layer_state_set_user(uint32_t state) {
             break;
         case MOUSE:
             set_led_green;
+            tap_code16(KC_ACL2);
             break;
         default:
             set_led_white;
@@ -269,31 +242,23 @@ uint32_t layer_state_set_user(uint32_t state) {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     const bool pressed = record->event.pressed;
 
-    if (pressed) interrupted = true;
-
     switch (keycode) {
-        case _MS_NE:
+        case KC_MS_NE:
             return mousekey_diagonal(pressed, KC_MS_UP, KC_MS_RIGHT);
 
-        case _MS_NW:
+        case KC_MS_NW:
             return mousekey_diagonal(pressed, KC_MS_UP, KC_MS_LEFT);
 
-        case _MS_SE:
+        case KC_MS_SE:
             return mousekey_diagonal(pressed, KC_MS_DOWN, KC_MS_RIGHT);
 
-        case _MS_SW:
+        case KC_MS_SW:
             return mousekey_diagonal(pressed, KC_MS_DOWN, KC_MS_LEFT);
 
-        case _MS_LK:
+        case KC_MS_LK:
             return toggle_mouse_lock(pressed);
 
-        case _MO_NM:
-            return mo_ext(pressed, NUMPAD, PSTR("_"));
-
-        case _MO_FN:
-            return mo_ext(pressed, FUNCTION, PSTR(SS_TAP(X_TAB)));
-
-        case _INFO:
+        case KC_INFO:
             return firmware_info(pressed);
     }
     return true;
@@ -303,33 +268,151 @@ void keyboard_post_init_user() {
     set_led_off;
 }
 
-void alt_esc(qk_tap_dance_state_t* state, void* user_data) {
-    if (!(get_mods() & MOD_BIT(KC_LALT))) {
-        SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_ESCAPE));
-    } else {
-        SEND_STRING(SS_TAP(X_ESCAPE));
+int cur_dance(qk_tap_dance_state_t *state) {
+    if (state->count == 1) {
+        if (state->pressed) return SINGLE_HOLD;
+        else return SINGLE_TAP;
+    }
+    if (state->count == 2) {
+        if (state->pressed) return DOUBLE_HOLD;
+        else return DOUBLE_TAP;
+    }
+    if (state->count == 3) {
+        if (state->pressed) return TRIPLE_HOLD;
+        else return TRIPLE_TAP;
+    }
+    return UNKNOWN;
+}
+
+static int l_raise_state;
+
+void l_raise_finished(qk_tap_dance_state_t *state, void *user_data) {
+    l_raise_state = cur_dance(state);
+    switch (l_raise_state) {
+        case SINGLE_HOLD:
+            register_mods(MOD_BIT(KC_LSFT));
+            break;
+
+        case SINGLE_TAP:
+            SEND_STRING("(");
+            break;
+
+        case DOUBLE_TAP:
+            SEND_STRING("{");
+            break;
+
+        case TRIPLE_TAP:
+            SEND_STRING("[");
+            break;
     }
 }
 
-void alt_esc_finished(qk_tap_dance_state_t* state, void* user_data) {
-    SEND_STRING(SS_UP(X_LALT));
-}
-
-void gui_tab(qk_tap_dance_state_t* state, void* user_data) {
-    if (!(get_mods() & MOD_BIT(KC_LGUI))) {
-        SEND_STRING(SS_DOWN(X_LGUI) SS_TAP(X_TAB));
-    } else {
-        SEND_STRING(SS_TAP(X_TAB));
+void l_raise_reset(qk_tap_dance_state_t *state, void *user_data) {
+    switch (l_raise_state) {
+        case SINGLE_HOLD:
+            unregister_mods(MOD_BIT(KC_LSFT));
+            break;
     }
 }
 
-void gui_tab_finished(qk_tap_dance_state_t* state, void* user_data) {
-    SEND_STRING(SS_UP(X_LGUI));
+static int l_lower_state;
+
+void l_lower_tap(qk_tap_dance_state_t *state, void *user_data) {
+    layer_on(NAVIGATION);
+}
+
+void l_lower_finished(qk_tap_dance_state_t *state, void *user_data) {
+    l_lower_state = cur_dance(state);
+    switch (l_lower_state) {
+        case SINGLE_TAP:
+            register_code(KC_TAB);
+            break;
+    }
+}
+
+void l_lower_reset(qk_tap_dance_state_t *state, void *user_data) {
+    switch (l_lower_state) {
+        case DOUBLE_HOLD:
+            break;
+
+        case SINGLE_TAP:
+            unregister_code(KC_TAB);
+            // intentionally no break to make sure the layer is off
+
+        default:
+            layer_off(NAVIGATION);
+            break;
+    }
+}
+
+static int r_raise_state;
+
+void r_raise_finished(qk_tap_dance_state_t *state, void *user_data) {
+    r_raise_state = cur_dance(state);
+    switch (r_raise_state) {
+        case SINGLE_HOLD:
+        case DOUBLE_HOLD:
+            register_mods(MOD_BIT(KC_RSFT));
+            break;
+
+        case SINGLE_TAP:
+            if (get_mods() & MOD_MASK_SHIFT) {
+                // cancel CapsLock emulation
+                unregister_mods(MOD_MASK_SHIFT);
+            } else {
+                SEND_STRING(")");
+            }
+            break;
+
+        case DOUBLE_TAP:
+            SEND_STRING("}");
+            break;
+
+        case TRIPLE_TAP:
+            SEND_STRING("]");
+            break;
+    }
+}
+
+void r_raise_reset(qk_tap_dance_state_t *state, void *user_data) {
+    switch (r_raise_state) {
+        case SINGLE_HOLD:
+            unregister_mods(MOD_BIT(KC_RSFT));
+            break;
+    }
+}
+
+static int r_lower_state;
+
+void r_lower_tap(qk_tap_dance_state_t *state, void *user_data) {
+    layer_on(NUMPAD);
+}
+
+void r_lower_finished(qk_tap_dance_state_t *state, void *user_data) {
+    r_lower_state = cur_dance(state);
+    switch (r_lower_state) {
+        case SINGLE_TAP:
+            SEND_STRING("_");
+            break;
+    }
+}
+
+void r_lower_reset(qk_tap_dance_state_t *state, void *user_data) {
+    switch (r_lower_state) {
+        case DOUBLE_HOLD:
+            break;
+
+        default:
+            layer_off(NUMPAD);
+            break;
+    }
 }
 
 qk_tap_dance_action_t tap_dance_actions[] = {
-    [TD_ALTESC] = ACTION_TAP_DANCE_FN_ADVANCED_TIME(alt_esc, alt_esc_finished, NULL, ALT_ESC_TIMEOUT),
-    [TD_GUITAB] = ACTION_TAP_DANCE_FN_ADVANCED_TIME(gui_tab, gui_tab_finished, NULL, GUI_TAB_TIMEOUT),
+    [TD_L_RAISE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, l_raise_finished, l_raise_reset),
+    [TD_L_LOWER] = ACTION_TAP_DANCE_FN_ADVANCED(l_lower_tap, l_lower_finished, l_lower_reset),
+    [TD_R_RAISE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, r_raise_finished, r_raise_reset),
+    [TD_R_LOWER] = ACTION_TAP_DANCE_FN_ADVANCED(r_lower_tap, r_lower_finished, r_lower_reset),
 };
 
 /* vim: set ts=4 sw=4 sts=4 et: */
