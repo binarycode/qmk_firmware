@@ -41,13 +41,18 @@ enum {
     KC_MS_LK,
     // Firmware info
     KC_INFO,
+    // tmux copy mode
+    KC_SCROL,
+    // tmux fingers
+    KC_FINGR,
+    // tmux
+    KC_CTRLA,
+    KC_CTRLB
 };
 
 // Tap dances
 enum {
-    TD_L_RAISE,
     TD_L_LOWER,
-    TD_R_RAISE,
     TD_R_LOWER
 };
 
@@ -72,14 +77,8 @@ enum {
 #define KC_MOUSE TG(MOUSE)
 
 // Tap dance
-#define KC_L_RSE  TD(TD_L_RAISE)
-#define KC_L_LWR  TD(TD_L_LOWER)
-#define KC_R_RSE  TD(TD_R_RAISE)
-#define KC_R_LWR  TD(TD_R_LOWER)
-
-// Copy/paste
-#define KC_COPY  LCTL(KC_C)
-#define KC_PASTE LCTL(KC_V)
+#define KC_L_LWR TD(TD_L_LOWER)
+#define KC_R_LWR TD(TD_R_LOWER)
 
 #define KC_    KC_TRNS
 #define KC_XXX KC_NO
@@ -102,7 +101,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
               LGUI  , LCTL  ,  ESC  , L_LWR ,      R_LWR , BSPC  , RCTL  , RGUI  ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
-               XXX  , LALT  ,  SPC  , L_RSE ,      R_RSE ,  ENT  , RALT  ,  XXX
+              CTRLA , LALT  ,  SPC  , LSFT  ,      RSFT  ,  ENT  , RALT  , CTRLB
 //          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
@@ -127,13 +126,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 [NAVIGATION] = LAYOUT_kc(
 //  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
-            ,       ,       ,       ,       ,       XXX  ,  XXX  , LBRC  , RBRC  , BSLS  ,
+            ,  F7   ,  F8   ,  F9   ,  F12  ,       XXX  ,  XXX  , LBRC  , RBRC  , BSLS  ,
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
-            ,       ,       ,       ,       ,      LEFT  , DOWN  ,  UP   , RGHT  , QUOT  ,
+            ,  F4   ,  F5   ,  F6   ,  F11  ,      LEFT  , DOWN  ,  UP   , RGHT  , QUOT  ,
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
-            ,       ,       ,       ,       ,      HOME  , PGDN  , PGUP  , END   ,  XXX  ,
+            ,  F1   ,  F2   ,  F3   ,  F10  ,      HOME  , PGDN  , PGUP  , END   ,  XXX  ,
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
-                    ,       ,       ,       ,            ,       ,       ,       ,
+                    ,       ,       ,       ,            ,  DEL  ,       ,       ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
                     ,       ,       ,       ,            ,       ,       ,
 //          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
@@ -146,9 +145,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
        XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,       XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
-       XXX  ,  XXX  ,  XXX  , COPY  ,  XXX  ,       XXX  , PASTE , MOUSE ,  XXX  ,  XXX  ,
+      SCROL ,  XXX  ,  XXX  , COPY  ,  XXX  ,       XXX  , PASTE , MOUSE ,  XXX  , FINGR ,
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
-       XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,       XXX  ,  XXX  ,  XXX  ,  XXX  , INFO  ,
+       XXX  , PSCR  ,  XXX  ,  XXX  ,  XXX  ,       XXX  ,  XXX  ,  XXX  ,  XXX  , INFO  ,
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
                     ,       ,       ,       ,            ,       ,       ,       ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
@@ -209,6 +208,48 @@ inline bool firmware_info(bool pressed) {
     return false;
 }
 
+inline bool tmux_copy_mode(bool pressed) {
+    if (pressed) {
+        SEND_STRING(SS_LCTRL("a") "[");
+    }
+    return false;
+}
+
+inline bool tmux_fingers(bool pressed) {
+    if (pressed) {
+        SEND_STRING(SS_LCTRL("b") "F");
+    }
+    return false;
+}
+
+inline bool tmux_slave(bool pressed) {
+    if (pressed) {
+        register_code(KC_LCTL);
+        tap_code(KC_A);
+        /*register_code(KC_A);*/
+        /*SEND_STRING(SS_DOWN(X_LCTL) SS_DOWN(X_A));*/
+    } else {
+        /*unregister_code(KC_A);*/
+        unregister_code(KC_LCTL);
+        /*SEND_STRING(SS_UP(X_A) SS_UP(X_LCTL));*/
+    }
+    return false;
+}
+
+inline bool tmux_master(bool pressed) {
+    if (pressed) {
+        register_code(KC_LCTL);
+        tap_code(KC_B);
+        /*register_code(KC_B);*/
+        /*SEND_STRING(SS_DOWN(X_LCTL) SS_DOWN(X_B));*/
+    } else {
+        /*unregister_code(KC_B);*/
+        unregister_code(KC_LCTL);
+        /*SEND_STRING(SS_UP(X_B) SS_UP(X_LCTL));*/
+    }
+    return false;
+}
+
 uint32_t layer_state_set_user(uint32_t state) {
     toggle_mouse_lock(false);
 
@@ -260,6 +301,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case KC_INFO:
             return firmware_info(pressed);
+
+        case KC_SCROL:
+            return tmux_copy_mode(pressed);
+
+        case KC_FINGR:
+            return tmux_fingers(pressed);
+
+        case KC_CTRLA:
+            return tmux_slave(pressed);
+
+        case KC_CTRLB:
+            return tmux_master(pressed);
     }
     return true;
 }
@@ -282,37 +335,6 @@ int cur_dance(qk_tap_dance_state_t *state) {
         else return TRIPLE_TAP;
     }
     return UNKNOWN;
-}
-
-static int l_raise_state;
-
-void l_raise_finished(qk_tap_dance_state_t *state, void *user_data) {
-    l_raise_state = cur_dance(state);
-    switch (l_raise_state) {
-        case SINGLE_HOLD:
-            register_mods(MOD_BIT(KC_LSFT));
-            break;
-
-        case SINGLE_TAP:
-            SEND_STRING("(");
-            break;
-
-        case DOUBLE_TAP:
-            SEND_STRING("{");
-            break;
-
-        case TRIPLE_TAP:
-            SEND_STRING("[");
-            break;
-    }
-}
-
-void l_raise_reset(qk_tap_dance_state_t *state, void *user_data) {
-    switch (l_raise_state) {
-        case SINGLE_HOLD:
-            unregister_mods(MOD_BIT(KC_LSFT));
-            break;
-    }
 }
 
 static int l_lower_state;
@@ -345,43 +367,6 @@ void l_lower_reset(qk_tap_dance_state_t *state, void *user_data) {
     }
 }
 
-static int r_raise_state;
-
-void r_raise_finished(qk_tap_dance_state_t *state, void *user_data) {
-    r_raise_state = cur_dance(state);
-    switch (r_raise_state) {
-        case SINGLE_HOLD:
-        case DOUBLE_HOLD:
-            register_mods(MOD_BIT(KC_RSFT));
-            break;
-
-        case SINGLE_TAP:
-            if (get_mods() & MOD_MASK_SHIFT) {
-                // cancel CapsLock emulation
-                unregister_mods(MOD_MASK_SHIFT);
-            } else {
-                SEND_STRING(")");
-            }
-            break;
-
-        case DOUBLE_TAP:
-            SEND_STRING("}");
-            break;
-
-        case TRIPLE_TAP:
-            SEND_STRING("]");
-            break;
-    }
-}
-
-void r_raise_reset(qk_tap_dance_state_t *state, void *user_data) {
-    switch (r_raise_state) {
-        case SINGLE_HOLD:
-            unregister_mods(MOD_BIT(KC_RSFT));
-            break;
-    }
-}
-
 static int r_lower_state;
 
 void r_lower_tap(qk_tap_dance_state_t *state, void *user_data) {
@@ -409,9 +394,7 @@ void r_lower_reset(qk_tap_dance_state_t *state, void *user_data) {
 }
 
 qk_tap_dance_action_t tap_dance_actions[] = {
-    [TD_L_RAISE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, l_raise_finished, l_raise_reset),
     [TD_L_LOWER] = ACTION_TAP_DANCE_FN_ADVANCED(l_lower_tap, l_lower_finished, l_lower_reset),
-    [TD_R_RAISE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, r_raise_finished, r_raise_reset),
     [TD_R_LOWER] = ACTION_TAP_DANCE_FN_ADVANCED(r_lower_tap, r_lower_finished, r_lower_reset),
 };
 
