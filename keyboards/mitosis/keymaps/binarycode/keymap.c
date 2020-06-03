@@ -43,8 +43,6 @@ enum {
     KC_INFO,
     // tmux copy mode
     KC_SCROL,
-    // tmux fingers
-    KC_FINGR,
     // tmux
     KC_CTRLA,
     KC_CTRLB
@@ -80,6 +78,17 @@ enum {
 #define KC_L_LWR TD(TD_L_LOWER)
 #define KC_R_LWR TD(TD_R_LOWER)
 
+// Copy-paste
+#define KC_CTRLC LCTL(KC_C)
+#define KC_CTRLV LCTL(KC_V)
+
+// Special functions
+#define KC_MNVIM LCTL(KC_F7)
+#define KC_FINGR LCTL(KC_F9)
+#define KC_TMUX1 LCTL(KC_F1)
+#define KC_TMUX2 LCTL(KC_F2)
+#define KC_TMUX3 LCTL(KC_F3)
+
 #define KC_    KC_TRNS
 #define KC_XXX KC_NO
 
@@ -99,9 +108,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
         Z   ,   X   ,   C   ,   V   ,   B   ,        N   ,   M   , COMM  ,  DOT  , SLSH  ,
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
-              LGUI  , LCTL  ,  ESC  , L_LWR ,      R_LWR , BSPC  , RCTL  , RGUI  ,
+               XXX  , CTRLC ,  ESC  , L_LWR ,      R_LWR , BSPC  , RCTL  , RGUI  ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
-              CTRLA , LALT  ,  SPC  , LSFT  ,      RSFT  ,  ENT  , RALT  , CTRLB
+              CTRLA , CTRLV ,  SPC  , LSFT  ,      RSFT  ,  ENT  , RALT  ,  XXX
 //          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
@@ -143,11 +152,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 [MACRO] = LAYOUT_kc(
 //  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
-       XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,       XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,
+       XXX  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,      PSCR  ,  XXX  ,  XXX  ,  XXX  ,  XXX  ,
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
-      SCROL ,  XXX  ,  XXX  , COPY  ,  XXX  ,       XXX  , PASTE , MOUSE ,  XXX  , FINGR ,
+       XXX  ,  XXX  , MNVIM , FINGR , SCROL ,       XXX  ,  XXX  , MOUSE ,  XXX  ,  XXX  ,
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
-       XXX  , PSCR  ,  XXX  ,  XXX  ,  XXX  ,       XXX  ,  XXX  ,  XXX  ,  XXX  , INFO  ,
+       XXX  , TMUX1 , TMUX2 , TMUX3 ,  XXX  ,       XXX  ,  XXX  ,  XXX  ,  XXX  , INFO  ,
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
                     ,       ,       ,       ,            ,       ,       ,       ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
@@ -211,13 +220,6 @@ inline bool firmware_info(bool pressed) {
 inline bool tmux_copy_mode(bool pressed) {
     if (pressed) {
         SEND_STRING(SS_LCTRL("a") "[");
-    }
-    return false;
-}
-
-inline bool tmux_fingers(bool pressed) {
-    if (pressed) {
-        SEND_STRING(SS_LCTRL("b") "F");
     }
     return false;
 }
@@ -304,9 +306,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case KC_SCROL:
             return tmux_copy_mode(pressed);
-
-        case KC_FINGR:
-            return tmux_fingers(pressed);
 
         case KC_CTRLA:
             return tmux_slave(pressed);
