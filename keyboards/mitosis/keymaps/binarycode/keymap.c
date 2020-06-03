@@ -109,15 +109,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 [NUMPAD] = LAYOUT_kc(
 //  ┌───────┬───────┬───────┬───────┬───────┐    ┌───────┬───────┬───────┬───────┬───────┐
-       GRV  ,   7   ,   8   ,   9   , MINS  ,            ,       ,       ,       ,       ,
+       GRV  ,   7   ,   8   ,   9   , MINS  ,      RBRC  , RPRN  , RCBR  ,       ,       ,
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
-       XXX  ,   4   ,   5   ,   6   ,  EQL  ,            ,       ,       ,       ,       ,
+       XXX  ,   4   ,   5   ,   6   ,  EQL  ,      LBRC  , LPRN  , LCBR  ,       ,       ,
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
-       XXX  ,   1   ,   2   ,   3   ,   0   ,            ,       ,       ,       ,       ,
+       XXX  ,   1   ,   2   ,   3   ,   0   ,       TAB  , UNDS  ,       ,       ,       ,
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
                     ,       ,       ,       ,            ,       ,       ,       ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
-                    ,       ,       ,       ,            ,       ,       ,
+                    ,       ,       ,  TAB  ,            ,       ,       ,
 //          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
@@ -134,7 +134,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
                     ,       ,       ,       ,            ,  DEL  ,       ,       ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
-                    ,       ,       ,       ,            ,       ,       ,
+                    ,       ,       ,       ,      UNDS  ,       ,       ,
 //          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
@@ -344,21 +344,21 @@ void l_lower_tap(qk_tap_dance_state_t *state, void *user_data) {
 }
 
 void l_lower_finished(qk_tap_dance_state_t *state, void *user_data) {
-    l_lower_state = cur_dance(state);
-    switch (l_lower_state) {
-        case SINGLE_TAP:
-            register_code(KC_TAB);
-            break;
-    }
+    /*l_lower_state = cur_dance(state);*/
+    /*switch (l_lower_state) {*/
+        /*case SINGLE_TAP:*/
+            /*register_code(KC_TAB);*/
+            /*break;*/
+    /*}*/
 }
 
 void l_lower_reset(qk_tap_dance_state_t *state, void *user_data) {
     switch (l_lower_state) {
-        case DOUBLE_HOLD:
-            break;
+        /*case DOUBLE_HOLD:*/
+            /*break;*/
 
-        case SINGLE_TAP:
-            unregister_code(KC_TAB);
+        /*case SINGLE_TAP:*/
+            /*unregister_code(KC_TAB);*/
             // intentionally no break to make sure the layer is off
 
         default:
@@ -374,18 +374,18 @@ void r_lower_tap(qk_tap_dance_state_t *state, void *user_data) {
 }
 
 void r_lower_finished(qk_tap_dance_state_t *state, void *user_data) {
-    r_lower_state = cur_dance(state);
-    switch (r_lower_state) {
-        case SINGLE_TAP:
-            SEND_STRING("_");
-            break;
-    }
+    /*r_lower_state = cur_dance(state);*/
+    /*switch (r_lower_state) {*/
+        /*case SINGLE_TAP:*/
+            /*SEND_STRING("_");*/
+            /*break;*/
+    /*}*/
 }
 
 void r_lower_reset(qk_tap_dance_state_t *state, void *user_data) {
     switch (r_lower_state) {
-        case DOUBLE_HOLD:
-            break;
+        /*case DOUBLE_HOLD:*/
+            /*break;*/
 
         default:
             layer_off(NUMPAD);
