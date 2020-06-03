@@ -108,9 +108,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //  ├───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┤
         Z   ,   X   ,   C   ,   V   ,   B   ,        N   ,   M   , COMM  ,  DOT  , SLSH  ,
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
-               XXX  , CTRLC ,  ESC  , L_LWR ,      R_LWR , BSPC  , RCTL  , RGUI  ,
+              CTRLC , LCTL  ,  ESC  , L_LWR ,      R_LWR , BSPC  , RCTL  , CTRLV ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
-              CTRLA , CTRLV ,  SPC  , LSFT  ,      RSFT  ,  ENT  , RALT  ,  XXX
+              CTRLA , LALT  ,  SPC  , LSFT  ,      RSFT  ,  ENT  , RALT  , RGUI
 //          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
