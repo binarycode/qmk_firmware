@@ -110,7 +110,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //  └───────┼───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┼───────┘
               CTRLC , LCTL  ,  ESC  , L_LWR ,      R_LWR , BSPC  , RCTL  , CTRLV ,
 //          ├───────┼───────┼───────┼───────┤    ├───────┼───────┼───────┼───────┤
-              CTRLA , LALT  ,  SPC  , LSFT  ,      RSFT  ,  ENT  , RALT  , RGUI
+              CTRLA , LALT  ,  SPC  , LSFT  ,      RSFT  ,  ENT  , RALT  , LGUI
 //          └───────┴───────┴───────┴───────┘    └───────┴───────┴───────┴───────┘
 ),
 
